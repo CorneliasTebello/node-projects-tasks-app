@@ -10,6 +10,7 @@ import userRouter from './routes/users.routes.js';
 import taskRouter from './routes/tasks.routes.js';
 import teamRouter from './routes/teams.routes.js';
 import authRouter from './routes/auth.routes.js';
+import dashboardRouter from './routes/dashboard.routes.js';
 
 import { checkAuthorization } from './controllers/auth.controller.js';
 
@@ -42,6 +43,7 @@ app.use('/api/tickets',checkAuthorization,ticketRouter);
 app.use('/api/users',checkAuthorization,userRouter);
 app.use('/api/tasks',checkAuthorization,taskRouter);
 app.use('/api/teams',checkAuthorization,teamRouter);
+app.use('/api/dashboard',checkAuthorization,dashboardRouter);
 app.use('/api/',authRouter);
 
 app.listen(8080, () => {
