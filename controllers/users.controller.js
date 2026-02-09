@@ -10,7 +10,7 @@ export const getUsers = async (req, res) => {
 	const page = Math.max(parseInt(req.query.page) || 1,1);
 	const limit = parseInt(req.query.limit) || 10;
 	let search = req.query.search?.trim() || "";
-	let subQueryWhere = "";
+	let subQueryWhere = " WHERE 1 = 1 ";
 	let searchColumns = [];
 	let queryParams = [];
 	
@@ -22,7 +22,7 @@ export const getUsers = async (req, res) => {
 		`last_name LIKE ?`,
 		`email LIKE ?`,
 		];
-		subQueryWhere = "WHERE " + searchColumns.join(" OR ");
+		subQueryWhere = subQueryWhere + " AND ( " + searchColumns.join(" OR ") + " )";
 		
 		const searchParam = `%${search}%`;
 		queryParams.push(searchParam,searchParam,searchParam);
@@ -38,6 +38,7 @@ export const getUsers = async (req, res) => {
 	u.date_updated
 	FROM users u
 	${subQueryWhere}
+	ORDER BY first_name ASC
 	LIMIT ?
 	OFFSET ?`;
 	
@@ -69,7 +70,8 @@ export const getUserById = async (req, res) => {
 	u.date_created,
 	u.date_updated
 	FROM users u
-	WHERE u.user_id	= ?;`;
+	WHERE u.user_id	= ?
+	ORDER BY first_name ASC;`;
 	
 	let results, err;
 	connection = await pool.getConnection();

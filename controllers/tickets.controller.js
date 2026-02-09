@@ -10,9 +10,27 @@ export const getTickets = async (req, res) => {
 	const page = Math.max(parseInt(req.query.page) || 1,1);
 	const limit = parseInt(req.query.limit) || 10;
 	let search = req.query.search?.trim() || "";
-	let subQueryWhere = "";
+	let subQueryWhere = " WHERE 1 = 1 ";
 	let searchColumns = [];
 	let queryParams = [];
+	let whereClauses = [];
+	
+	//Sorting (whitelist columns!)
+	const allowedSortColumns = [
+		"date_created",
+		"date_updated",
+		"name",
+		"ticket_id",
+	];
+	
+	const sortBy = allowedSortColumns.includes(req.query.sortBy)
+		? req.query.sortBy
+		: "date_created";
+
+	const sortOrder = req.query.sortOrder?.toUpperCase() === "ASC"
+		? "ASC"
+		: "DESC";
+		
 	
 	//Build sub-query "Where"
 	if(search){
@@ -21,11 +39,36 @@ export const getTickets = async (req, res) => {
 		`name LIKE ?`,
 		`description LIKE ?`,
 		];
-		subQueryWhere = "WHERE " + searchColumns.join(" OR ");
+		subQueryWhere = subQueryWhere + " AND ( " + searchColumns.join(" OR ") + " )";
 		
 		const searchParam = `%${search}%`;
 		queryParams.push(searchParam,searchParam);
 	}
+	
+		
+	//Filters
+	const { status, startDate, endDate } = req.query;
+	
+	// Status filter
+	if (status) {
+		whereClauses.push(`t.status = ?`);
+		queryParams.push(status);
+	}
+
+	// Date range filter
+	if (startDate) {
+		whereClauses.push(`t.date_created >= ?`);
+		queryParams.push(startDate);
+	}
+
+	if (endDate) {
+		whereClauses.push(`t.date_created <= ?`);
+		queryParams.push(endDate);
+	}
+	
+	const whereSQL = subQueryWhere + (whereClauses.length > 0 ? 
+		` AND ${whereClauses.join(" AND ")}` : ""
+	);
 	
 	let sql = `SELECT 
 	t.ticket_id, 
@@ -34,7 +77,8 @@ export const getTickets = async (req, res) => {
 	t.date_created,
 	t.date_updated
 	FROM tickets t
-	${subQueryWhere}
+	${whereSQL}
+	ORDER BY ${sortBy} ${sortOrder}
 	LIMIT ?
 	OFFSET ?`;
 	
@@ -65,7 +109,9 @@ export const getTicketById = async (req, res) => {
 	t.description, 
 	t.date_created,
 	t.date_updated
-	FROM tickets t WHERE t.ticket_id = ?;`;	
+	FROM tickets t 
+	WHERE t.ticket_id = ?
+	ORDER BY date_created DESC;`;	
 	
 	let results, err;
 	connection = await pool.getConnection();
@@ -102,26 +148,6 @@ export const getTicketUsersAssigned = async (req, res) => {
 	INNER JOIN users uab ON uab.user_id = tua.assigned_by_user_id	
 	WHERE tua.ticket_id = ?`;
 			
-/*
-[
-	{
-		name: "Jack",
-		id : "2",
-		assigned_by : {
-			name : "Pete",
-			id : 4
-		}
-	},
-	{
-		name: "Mary",
-		id : "41",
-		assigned_by : {
-			name : "Pete",
-			id : 4
-		}
-	}
-]
-*/
 	
 	let results, err;
 	connection = await pool.getConnection();

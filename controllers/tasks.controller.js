@@ -10,9 +10,27 @@ export const getTasks = async (req, res) => {
 	const page = Math.max(parseInt(req.query.page) || 1,1);
 	const limit = parseInt(req.query.limit) || 10;
 	let search = req.query.search?.trim() || "";
-	let subQueryWhere = "";
+	let subQueryWhere = " WHERE 1 = 1 ";
 	let searchColumns = [];
 	let queryParams = [];
+	let whereClauses = [];
+	
+	//Sorting (whitelist columns!)
+	const allowedSortColumns = [
+		"date_created",
+		"date_updated",
+		"name",
+		"ticket_id",
+	];
+	
+	const sortBy = allowedSortColumns.includes(req.query.sortBy)
+		? req.query.sortBy
+		: "date_created";
+
+	const sortOrder = req.query.sortOrder?.toUpperCase() === "ASC"
+		? "ASC"
+		: "DESC";
+		
 	
 	//Build sub-query "Where"
 	if(search){
@@ -22,11 +40,36 @@ export const getTasks = async (req, res) => {
 		`t.description LIKE ?`,
 		`t.status LIKE ?`,
 		];
-		subQueryWhere = "WHERE " + searchColumns.join(" OR ");
+		subQueryWhere = subQueryWhere + " AND ( " + searchColumns.join(" OR ") + " )";
 		
 		const searchParam = `%${search}%`;
 		queryParams.push(searchParam,searchParam,searchParam);
 	}
+	
+		
+	//Filters
+	const { status, startDate, endDate } = req.query;
+	
+	// Status filter
+	if (status) {
+		whereClauses.push(`t.status = ?`);
+		queryParams.push(status);
+	}
+
+	// Date range filter
+	if (startDate) {
+		whereClauses.push(`t.date_created >= ?`);
+		queryParams.push(startDate);
+	}
+
+	if (endDate) {
+		whereClauses.push(`t.date_created <= ?`);
+		queryParams.push(endDate);
+	}
+	
+	const whereSQL = subQueryWhere + (whereClauses.length > 0 ? 
+		` AND ${whereClauses.join(" AND ")}` : ""
+	);
 	
 	let sql = `SELECT 
 	t.task_id, 
@@ -36,7 +79,8 @@ export const getTasks = async (req, res) => {
 	t.date_created,
 	t.date_updated
 	FROM tasks t
-	${subQueryWhere}
+	${whereSQL}
+	ORDER BY ${sortBy} ${sortOrder}
 	LIMIT ?
 	OFFSET ?`;
 	
@@ -66,7 +110,10 @@ export const getTaskById = async (req, res) => {
 	t.status, 
 	t.date_created,
 	t.date_updated
-	FROM tasks t WHERE t.task_id = ?;`;
+	FROM tasks t 
+	WHERE t.task_id = ?
+	ORDER BY date_created DESC
+	;`;
 	
 	let results, err;
 	connection = await pool.getConnection();

@@ -10,7 +10,7 @@ export const getTeams = async (req, res) => {
 	const page = Math.max(parseInt(req.query.page) || 1,1);
 	const limit = parseInt(req.query.limit) || 10;
 	let search = req.query.search?.trim() || "";
-	let subQueryWhere = "";
+	let subQueryWhere = " WHERE 1 = 1 ";
 	let searchColumns = [];
 	let queryParams = [];
 	
@@ -21,7 +21,7 @@ export const getTeams = async (req, res) => {
 		`t.name LIKE ?`,
 		`t.description LIKE ?`,
 		];
-		subQueryWhere = "WHERE " + searchColumns.join(" OR ");
+		subQueryWhere = subQueryWhere + " AND ( " + searchColumns.join(" OR ") + " )";
 		
 		const searchParam = `%${search}%`;
 		queryParams.push(searchParam,searchParam);
@@ -35,6 +35,7 @@ export const getTeams = async (req, res) => {
 	t.date_updated
 	FROM teams t
 	${subQueryWhere}
+	ORDER BY t.date_created DESC
 	LIMIT ?
 	OFFSET ?`;
 	
@@ -63,7 +64,9 @@ export const getTeamById = async (req, res) => {
 	t.date_created,
 	t.date_updated
 	FROM teams t
-	WHERE t.team_id= ?;`;	
+	WHERE t.team_id= ?
+	ORDER BY t.date_created DESC
+	;`;	
 	
 	let results, err;
 	connection = await pool.getConnection();
@@ -89,7 +92,9 @@ export const getTeamUsers = async (req, res) => {
 	u.date_updated
 	FROM team_users tu
 	INNER JOIN users u ON u.user_id = tu.user_id
-	WHERE tu.team_id= ?;`;
+	WHERE tu.team_id= ?
+	ORDER BY u.first_name DESC
+	;`;
 	
 	let results, err;
 	connection = await pool.getConnection();
