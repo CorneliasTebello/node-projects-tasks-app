@@ -169,7 +169,7 @@ export default function ProjectForm({project_id, name, description, status}){
 		<div className="mb-3 row">
 			<label htmlFor="inputDescription" className="col-sm-2 col-form-label">Status</label>
 			<div className="col-sm-10">
-				<StatusSelect name="status" defaultValue={projectStatus} classNames="form-select" />
+				<StatusSelect name="status" value={projectStatus} classNames="form-select" />
 			</div>
 		</div>
 		<div className="d-flex justify-content-end">
