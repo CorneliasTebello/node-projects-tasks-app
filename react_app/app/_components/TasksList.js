@@ -4,6 +4,7 @@ import RestAPI from '@service/RestAPI.js';
 import LoadingAnimation from '@components/LoadingAnimation.js';
 import ModalTaskForm from '@components/ModalTaskForm.js';
 import StatusSelect from '@components/StatusSelect.js';
+import StatusBadge from '@components/StatusBadge.js';
 
 import { setPageParams } from '@utils/helpers.js';
 
@@ -130,7 +131,7 @@ export default function TasksList(){
 		
 		{isLoading ? 
 		<table className="table table-hover placeholder-glow">
-			<thead><tr><th>#</th><th>Name</th><th>Status</th></tr></thead>
+			<thead><tr><th>#</th><th>Name</th><th>Status</th><th></th></tr></thead>
 			<tbody>
 			{new Array(6).fill(0).map((item, index) => (
 				<tr key={index} className="">
@@ -148,13 +149,13 @@ export default function TasksList(){
 		<div>
 			{
 				<table className="table table-hover">
-					<thead><tr><th>#</th><th>Name</th><th>Status</th></tr></thead>
+					<thead><tr><th>#</th><th>Name</th><th>Status</th><th></th></tr></thead>
 					<tbody>
 					{data.map((entity,index) => (
 						<tr key={entity.task_id} className="">
 							<td className="fw-bold">{index+1}</td>
 							<td>{entity.name}</td>
-							<td className="">{entity.status}</td>
+							<td className=""><StatusBadge status={entity.status} /></td>
 							<td className=""><button className="btn btn-primary" onClick={(e) => handleTaskView(e,entity)}>View</button></td>
 						</tr>
 					))}
