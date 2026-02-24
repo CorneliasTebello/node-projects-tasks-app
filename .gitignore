@@ -43,3 +43,4 @@ report.[(log)?(xml)?(json)?(html)?]
 *.swp
 .netrwhist
 *.orig
+.vs/
