@@ -17,5 +17,8 @@ export default function WelcomeMessage(){
 	
 	
 	
-	return <h1 className="mb-3"> Welcome {userFirstName}!</h1>
+	return <>
+	<h4 className="fw-bold mb-0"> Welcome back, {userFirstName}.</h4>
+	<p className="text-muted">Here's a quick overview of your workspace.</p>
+	</>;
 }
